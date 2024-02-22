@@ -13,6 +13,9 @@ unzip JetBrainsMono.zip -d JetBrainsMono
 if [[ ! -d ~/.local/share/fonts ]]; then
     mkdir -p ~/.local/share/fonts
 fi
+if [[ -d ~/.local/share/fonts/JetBrainsMono ]]; then
+    rm -rf ~/.local/share/fonts/JetBrainsMono
+fi
 mv JetBrainsMono ~/.local/share/fonts/
 rm -rf JetBrainsMono*
 
