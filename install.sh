@@ -1,11 +1,16 @@
 #!/bin/bash
 
 sudo apt-get update
-sudo apt-get install -y software-properties-common build-essential
+sudo apt-get install -y software-properties-common build-essential zsh
+
 # Install tmux
 sudo apt-get install tmux -y
-cp .tmux.conf ~/
-tmux kill-server
+mkdir ~/.config/tmux
+if [[ -f ~/.config/tmux/tmux.conf ]]; then
+  mv ~/.config/tmux/tmux.conf ~/.config/tmux/tmux.conf.bak
+fi
+cp tmux.conf ~/.config/tmux/
+tmux source ~/.config/tmux/tmux.conf
 
 # Install JetBrainsMono NerdFont
 curl -LO https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
