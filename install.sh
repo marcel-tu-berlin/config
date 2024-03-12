@@ -62,10 +62,10 @@ if [[ -d ~/.config/nvim ]]; then
 fi
 git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
 
+# Note: Noting can come below zsh install.sh because it quits the shell
 # Install oh-my-zsh
 echo "Installing oh-my-zsh..."
 if [[ -d ~/.oh-my-zsh ]]; then
   rm -rf ~/.oh-my-zsh
 fi
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
