@@ -1,0 +1,12 @@
+[user]
+	email = marcel.heidebrecht@sourcepark.de
+	name = Marcel Heidebrecht
+[core]
+	editor = code --wait
+[credential]
+	helper = store
+[pull]
+	rebase = false
+
+[alias]
+	lg = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --all
