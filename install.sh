@@ -1,71 +1,104 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-echo "Installing dependencies..."
-sudo apt-get update
-sudo apt-get install -y software-properties-common build-essential zsh git xclip acpi lm-sensors curl sed sysstat
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Install tmux
-echo "Installing tmux..."
-sudo apt-get install tmux -y
-mkdir ~/.config/tmux
-if [[ -f ~/.config/tmux/tmux.conf ]]; then
-  mv ~/.config/tmux/tmux.conf ~/.config/tmux/tmux.conf.bak
-fi
+# Function to print colored messages
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
 
-# Install tmux plugin manager
-echo "Installing tmux plugin manager..."
-if [[ -d ~/.tmux/plugins/tpm ]]; then
-  rm -rf ~/.tmux/plugins/tpm
-fi
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
 
-# Install tmux configuration
-echo "Installing tmux configuration..."
-cp tmux.conf ~/.config/tmux/
-tmux source ~/.config/tmux/tmux.conf
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
 
-# Install JetBrainsMono NerdFont
-echo "Installing JetBrainsMono NerdFont..."
-curl -LO https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
-unzip JetBrainsMono.zip -d JetBrainsMono
-if [[ ! -d ~/.local/share/fonts ]]; then
-    mkdir -p ~/.local/share/fonts
-fi
-if [[ -d ~/.local/share/fonts/JetBrainsMono ]]; then
-    rm -rf ~/.local/share/fonts/JetBrainsMono
-fi
-mv JetBrainsMono ~/.local/share/fonts/
-rm -rf JetBrainsMono*
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
 
-# Install node latest
-echo "Installing node latest..."
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-source ~/.bashrc
-nvm install node
+# Function to get the home directory path
+get_home_dir() {
+    echo "$HOME"
+}
 
-# Install Neovim
-echo "Installing Neovim..."
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-sudo rm -rf /opt/nvim
-sudo tar -C /opt -xzf nvim-linux64.tar.gz
-sudo ln -s /opt/nvim-linux64/bin/nvim /usr/bin/nvim
-rm nvim-linux64.tar.gz
-source ~/.bashrc
+# Function to create backup of existing file
+backup_file() {
+    local file_path="$1"
+    local backup_path="${file_path}.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    if cp "$file_path" "$backup_path"; then
+        log_warning "Existing file backed up to: $backup_path"
+        return 0
+    else
+        log_error "Failed to create backup of $file_path"
+        return 1
+    fi
+}
 
-# Install NvChad
-echo "Installing NvChad..."
-if [[ -d ~/.config/nvim ]]; then
-    rm -rf ~/.config/nvim.bak
-    mv ~/.config/nvim ~/.config/nvim.bak
-    rm -rf ~/.config/nvim
-    rm -rf ~/.local/share/nvim
-fi
-git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
+# Function to install .gitconfig
+install_gitconfig() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local source_file="$script_dir/.gitconfig"
+    local home_dir="$(get_home_dir)"
+    local target_file="$home_dir/.gitconfig"
+    
+    log_info "Installing .gitconfig..."
+    
+    # Check if source file exists
+    if [[ ! -f "$source_file" ]]; then
+        log_error ".gitconfig not found in $script_dir"
+        return 1
+    fi
+    
+    # Check if target file already exists
+    if [[ -f "$target_file" ]]; then
+        log_warning "Existing .gitconfig found at $target_file"
+        
+        # Create backup
+        if ! backup_file "$target_file"; then
+            return 1
+        fi
+    fi
+    
+    # Copy the file
+    if cp "$source_file" "$target_file"; then
+        log_success ".gitconfig installed successfully to $target_file"
+        
+        # Set appropriate permissions
+        chmod 644 "$target_file"
+        log_info "Set permissions (644) for .gitconfig"
+        
+        return 0
+    else
+        log_error "Failed to copy .gitconfig to $target_file"
+        return 1
+    fi
+}
 
-# Note: Noting can come below zsh install.sh because it quits the shell
-# Install oh-my-zsh
-echo "Installing oh-my-zsh..."
-if [[ -d ~/.oh-my-zsh ]]; then
-  rm -rf ~/.oh-my-zsh
-fi
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+# Main installation function
+main() {
+    log_info "Starting configuration installation..."
+    log_info "Detected OS: $(uname -s)"
+    log_info "Home directory: $(get_home_dir)"
+    
+    # Install .gitconfig
+    if install_gitconfig; then
+        log_success "All configurations installed successfully!"
+    else
+        log_error "Installation failed!"
+        exit 1
+    fi
+}
+
+# Run main function
+main "$@"
+
+
