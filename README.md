@@ -26,12 +26,14 @@ Installs essential development tools and programs specifically for macOS:
 ### `configure.sh` - Configuration Management
 Manages dotfiles and system configurations (cross-platform):
 - Git configuration (`.gitconfig`)
+- Tmux configuration (`.tmux.conf`)
 - Automatic backup of existing configurations
 - Safe installation with rollback capability
 
 ## Current Configurations
 
 - **Git Configuration** (`.gitconfig`) - Git user settings, aliases, and preferences
+- **Tmux Configuration** (`.tmux.conf`) - Tmux plugin configuration for session persistence
 
 ## Usage
 
@@ -82,6 +84,8 @@ To configure dotfiles without installing programs (works on any Unix-like system
 1. **Detects your system** - Identifies your OS and home directory
 2. **Backup existing files** - Creates timestamped backups of any existing configuration files
 3. **Install configurations** - Copies configuration files to their appropriate locations
+   - Git configuration (`.gitconfig`) from source file
+   - Tmux configuration (`.tmux.conf`) with plugin settings
 4. **Set permissions** - Ensures proper file permissions are applied
 5. **Provide feedback** - Shows colored output indicating success, warnings, or errors
 
@@ -113,9 +117,9 @@ To add new programs to the macOS installation script:
 ### Adding New Configurations
 To add new configuration files:
 
-1. Add the configuration file to this directory
+1. Add the configuration file to this directory (if it's a file-based config)
 2. Update the `configure.sh` script to include installation logic for the new file
-3. Follow the same pattern as the existing `install_gitconfig()` function
+3. Follow the same pattern as the existing `install_gitconfig()` or `install_tmux_conf()` functions
 
 ## Requirements
 
