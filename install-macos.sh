@@ -124,6 +124,51 @@ install_dev_tools() {
     fi
 }
 
+# Function to install Tmux Plugin Manager (TPM)
+install_tpm() {
+    local home_dir="$(get_home_dir)"
+    local tpm_dir="$home_dir/.tmux/plugins/tpm"
+    
+    log_info "Installing Tmux Plugin Manager (TPM)..."
+    
+    # Check if TPM is already installed
+    if [[ -d "$tpm_dir" ]]; then
+        log_success "TPM already installed at $tpm_dir"
+        
+        # Update existing installation
+        log_info "Updating TPM..."
+        if (cd "$tpm_dir" && git pull); then
+            log_success "TPM updated successfully"
+        else
+            log_warning "Failed to update TPM, but continuing..."
+        fi
+        return 0
+    fi
+    
+    # Create .tmux/plugins directory if it doesn't exist
+    local plugins_dir="$home_dir/.tmux/plugins"
+    if [[ ! -d "$plugins_dir" ]]; then
+        log_info "Creating tmux plugins directory..."
+        if mkdir -p "$plugins_dir"; then
+            log_info "Created directory: $plugins_dir"
+        else
+            log_error "Failed to create directory: $plugins_dir"
+            return 1
+        fi
+    fi
+    
+    # Clone TPM repository
+    log_info "Cloning TPM from GitHub..."
+    if git clone https://github.com/tmux-plugins/tpm "$tpm_dir"; then
+        log_success "TPM installed successfully to $tpm_dir"
+        log_info "To complete TPM setup, start tmux and press 'prefix + I' to install plugins"
+        return 0
+    else
+        log_error "Failed to clone TPM repository"
+        return 1
+    fi
+}
+
 # Main installation function
 main() {
     log_info "Starting system installation..."
@@ -160,6 +205,16 @@ main() {
     else
         log_error "Homebrew not available - skipping development tools installation"
         exit_code=1
+    fi
+    
+    # Install TPM (Tmux Plugin Manager) - requires git
+    if command_exists git; then
+        if ! install_tpm; then
+            log_error "TPM installation failed"
+            exit_code=1
+        fi
+    else
+        log_warning "Git not available - skipping TPM installation"
     fi
     
     if [[ $exit_code -eq 0 ]]; then

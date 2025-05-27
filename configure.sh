@@ -62,9 +62,18 @@ install_tmux_conf() {
     
     # Create the tmux configuration
     cat > "$target_file" << 'EOF'
-# Tmux plugin configuration
-set -g @plugin 'tmux-plugins/tmux-resurrect'
-set -g @plugin 'tmux-plugins/tmux-continuum'
+# Tmux Plugin Manager (TPM) - Essential plugin manager for tmux
+set -g @plugin 'tmux-plugins/tpm'
+
+# Tmux sensible defaults - Basic tmux settings that everyone can agree on
+set -g @plugin 'tmux-plugins/tmux-sensible'
+
+# Session persistence plugins
+set -g @plugin 'tmux-plugins/tmux-resurrect'  # Save and restore tmux sessions
+set -g @plugin 'tmux-plugins/tmux-continuum'  # Continuous saving of tmux environment
+
+# Initialize TPM (keep this line at the very bottom of tmux.conf)
+run '~/.tmux/plugins/tpm/tpm'
 EOF
     
     if [[ $? -eq 0 ]]; then
@@ -73,6 +82,19 @@ EOF
         # Set appropriate permissions
         chmod 644 "$target_file"
         log_info "Set permissions (644) for .tmux.conf"
+        
+        # Reload tmux configuration if tmux is currently running
+        if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
+            log_info "Tmux is running - reloading configuration..."
+            if tmux source "$target_file"; then
+                log_success "Tmux configuration reloaded successfully"
+            else
+                log_warning "Failed to reload tmux configuration, but continuing..."
+                log_info "You can manually reload with: tmux source ~/.tmux.conf"
+            fi
+        else
+            log_info "Tmux not running - configuration will be loaded on next tmux start"
+        fi
         
         return 0
     else
