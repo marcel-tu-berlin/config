@@ -128,15 +128,12 @@ To add new configuration files:
 If `ngrok` is installed when you run `./configure.sh`, the script appends a clearly delimited block to your `~/.zshrc`:
 
 ```
-# >>> ngrok completion (config repo) >>>
-# Automatically added by config repository's configure.sh
 if command -v ngrok &>/dev/null; then
    eval "$(ngrok completion)"
 fi
-# <<< ngrok completion (config repo) <<<
 ```
 
-Re-run `./configure.sh` after installing `ngrok` if you installed it later; the block is only added once (idempotent). You can remove the entire block manually if you no longer want it.
+If a legacy marker-based block was previously inserted, the script will remove it and replace it with the exact 3-line snippet. Re-run `./configure.sh` any time after installing `ngrok` to add it. To remove completion, just delete those three lines manually.
 
 ## Requirements
 

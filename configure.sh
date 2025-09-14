@@ -8,54 +8,60 @@ source "$SCRIPT_DIR/utils.sh"
 install_ngrok_completion() {
     local home_dir="$(get_home_dir)"
     local zshrc_file="$home_dir/.zshrc"
-    local begin_marker="# >>> ngrok completion (config repo) >>>"
-    local end_marker="# <<< ngrok completion (config repo) <<<"
+    local required_snippet=$'if command -v ngrok &>/dev/null; then\n    eval "$(ngrok completion)"\nfi'
+    local first_line='if command -v ngrok &>/dev/null; then'
 
-    log_info "Configuring ngrok shell completion (zsh)..."
+    log_info "Ensuring exact ngrok completion snippet present in .zshrc..."
 
-    # If ngrok not installed, skip gracefully
+    # Skip if ngrok not installed (don't add placeholder)
     if ! command_exists ngrok; then
-        log_warning "ngrok not found in PATH - skipping completion setup"
-        log_info "Install ngrok first, then re-run ./configure.sh to add completions"
+        log_warning "ngrok not found in PATH - skipping completion snippet"
         return 0
     fi
 
-    # Create .zshrc if it does not exist
+    # Ensure file exists
     if [[ ! -f "$zshrc_file" ]]; then
-        log_warning ".zshrc not found - creating a new one at $zshrc_file"
         if ! touch "$zshrc_file"; then
             log_error "Failed to create $zshrc_file"
             return 1
         fi
     fi
 
-    # Check if block already present
-    if grep -Fqs "$begin_marker" "$zshrc_file"; then
-        log_success "ngrok completion block already present in .zshrc"
-        return 0
+    # Remove any previously added marker-based block (legacy cleanup)
+    if grep -Fq '# >>> ngrok completion (config repo) >>>' "$zshrc_file"; then
+        if ! backup_file "$zshrc_file"; then
+            log_warning "Could not backup before cleanup"
+        fi
+        # Delete lines between the markers inclusive
+        tmp_file="${zshrc_file}.tmp.$$"
+        awk '/# >>> ngrok completion (config repo) >>>/{flag=1;next} /# <<< ngrok completion (config repo) <<< /{flag=0;next} !flag {print}' "$zshrc_file" > "$tmp_file" && mv "$tmp_file" "$zshrc_file"
+        log_info "Removed legacy ngrok completion block"
     fi
 
-    # Backup existing .zshrc before modification
+    # Detect if exact snippet already exists (match first line and eval line pattern)
+    if grep -Fq "$first_line" "$zshrc_file" && grep -Fq 'eval "$(ngrok completion)"' "$zshrc_file"; then
+        # Further validate contiguous block
+        if grep -Fq "$required_snippet" "$zshrc_file"; then
+            log_success "Exact ngrok completion snippet already present"
+            return 0
+        fi
+    fi
+
+    # Backup before appending new snippet
     if ! backup_file "$zshrc_file"; then
         log_warning "Proceeding without .zshrc backup (backup failed)"
     fi
 
     {
-        echo "" # ensure newline
-        echo "$begin_marker"
-        echo "# Automatically added by config repository's configure.sh"
-        echo "if command -v ngrok &>/dev/null; then"
-        echo "    eval \"$(ngrok completion)\""
-        echo "fi"
-        echo "$end_marker"
+        echo "" # newline separation
+        printf '%s\n' "$required_snippet"
     } >> "$zshrc_file"
 
     if [[ $? -eq 0 ]]; then
-        log_success "ngrok completion added to .zshrc"
-        log_info "Reload with: source ~/.zshrc (or open a new terminal)"
-        return 0
+        log_success "ngrok completion snippet appended to .zshrc"
+        log_info "Reload with: source ~/.zshrc"
     else
-        log_error "Failed to append ngrok completion to .zshrc"
+        log_error "Failed to append ngrok completion snippet"
         return 1
     fi
 }
