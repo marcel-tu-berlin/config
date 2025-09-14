@@ -4,6 +4,62 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/utils.sh"
 
+# Function to ensure ngrok shell completions are added to the user's .zshrc (idempotent)
+install_ngrok_completion() {
+    local home_dir="$(get_home_dir)"
+    local zshrc_file="$home_dir/.zshrc"
+    local begin_marker="# >>> ngrok completion (config repo) >>>"
+    local end_marker="# <<< ngrok completion (config repo) <<<"
+
+    log_info "Configuring ngrok shell completion (zsh)..."
+
+    # If ngrok not installed, skip gracefully
+    if ! command_exists ngrok; then
+        log_warning "ngrok not found in PATH - skipping completion setup"
+        log_info "Install ngrok first, then re-run ./configure.sh to add completions"
+        return 0
+    fi
+
+    # Create .zshrc if it does not exist
+    if [[ ! -f "$zshrc_file" ]]; then
+        log_warning ".zshrc not found - creating a new one at $zshrc_file"
+        if ! touch "$zshrc_file"; then
+            log_error "Failed to create $zshrc_file"
+            return 1
+        fi
+    fi
+
+    # Check if block already present
+    if grep -Fqs "$begin_marker" "$zshrc_file"; then
+        log_success "ngrok completion block already present in .zshrc"
+        return 0
+    fi
+
+    # Backup existing .zshrc before modification
+    if ! backup_file "$zshrc_file"; then
+        log_warning "Proceeding without .zshrc backup (backup failed)"
+    fi
+
+    {
+        echo "" # ensure newline
+        echo "$begin_marker"
+        echo "# Automatically added by config repository's configure.sh"
+        echo "if command -v ngrok &>/dev/null; then"
+        echo "    eval \"$(ngrok completion)\""
+        echo "fi"
+        echo "$end_marker"
+    } >> "$zshrc_file"
+
+    if [[ $? -eq 0 ]]; then
+        log_success "ngrok completion added to .zshrc"
+        log_info "Reload with: source ~/.zshrc (or open a new terminal)"
+        return 0
+    else
+        log_error "Failed to append ngrok completion to .zshrc"
+        return 1
+    fi
+}
+
 # Function to install .gitconfig
 install_gitconfig() {
     local source_file="$SCRIPT_DIR/.gitconfig"
@@ -119,6 +175,11 @@ main() {
     if ! install_tmux_conf; then
         log_error "Installation failed!"
         exit 1
+    fi
+
+    # Install ngrok completion (non-fatal if it fails)
+    if ! install_ngrok_completion; then
+        log_warning "ngrok completion setup encountered an issue (continuing)"
     fi
     
     log_success "All configurations installed successfully!"

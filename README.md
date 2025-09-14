@@ -34,6 +34,7 @@ Manages dotfiles and system configurations (cross-platform):
 
 - **Git Configuration** (`.gitconfig`) - Git user settings, aliases, and preferences
 - **Tmux Configuration** (`.tmux.conf`) - Tmux plugin configuration for session persistence
+ - **ngrok zsh Completion** (appended block in `.zshrc`) - Automatically adds ngrok shell completion if ngrok is installed
 
 ## Usage
 
@@ -87,7 +88,8 @@ To configure dotfiles without installing programs (works on any Unix-like system
    - Git configuration (`.gitconfig`) from source file
    - Tmux configuration (`.tmux.conf`) with plugin settings
 4. **Set permissions** - Ensures proper file permissions are applied
-5. **Provide feedback** - Shows colored output indicating success, warnings, or errors
+5. **Add ngrok completion** - Detects `ngrok` and appends a managed completion block to `.zshrc` (idempotent)
+6. **Provide feedback** - Shows colored output indicating success, warnings, or errors
 
 ### Backup System
 
@@ -120,6 +122,21 @@ To add new configuration files:
 1. Add the configuration file to this directory (if it's a file-based config)
 2. Update the `configure.sh` script to include installation logic for the new file
 3. Follow the same pattern as the existing `install_gitconfig()` or `install_tmux_conf()` functions
+
+### ngrok Completion Block
+
+If `ngrok` is installed when you run `./configure.sh`, the script appends a clearly delimited block to your `~/.zshrc`:
+
+```
+# >>> ngrok completion (config repo) >>>
+# Automatically added by config repository's configure.sh
+if command -v ngrok &>/dev/null; then
+   eval "$(ngrok completion)"
+fi
+# <<< ngrok completion (config repo) <<<
+```
+
+Re-run `./configure.sh` after installing `ngrok` if you installed it later; the block is only added once (idempotent). You can remove the entire block manually if you no longer want it.
 
 ## Requirements
 
